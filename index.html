@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>webgl</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <style type="text/css">
+        body {
+            text-align: center;
+        }
+        .menu-options {
+            margin: 0 auto;
+            margin-top: 100px;
+        }
+        div#canvas-frame {
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            height: 600px;
+            background-color: #EEEEEE;
+        }
+        .booth {
+            position: absolute;
+        }
+    </style>
+</head>
+    
+<body onload="threeStart();">
+    <div class="btn-group menu-options">
+        <button type="button" class="btn btn-info" onclick="normal();">Normal</button>
+        <button type="button" class="btn btn-info" onclick="japanese();">Japanese</button>
+        <button type="button" class="btn btn-info" onclick="westernStyle();">western style</button>
+        <button type="button" class="btn btn-info" onclick="charm();">charm</button>
+        <button type="button" class="btn btn-info" onclick="cyan();">cyan</button>
+        <button type="button" class="btn btn-info" onclick="travel();">travel</button>
+        <button type="button" class="btn btn-info" onclick="blackandwhite();">black and white</button>
+        <button type="button" class="btn btn-info" onclick="warm();">warm</button>
+    </div>
+    <div id="canvas-frame"></div>
+    <video id="video" width="100%" height="600px" style="display: none;" autoplay></video> 
+</body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/97/three.min.js"></script>
+
+<script>
+    var renderer;
+    function initThree() {
+        width = document.getElementById('canvas-frame').clientWidth;
+        height = document.getElementById('canvas-frame').clientHeight;
+
+        renderer = new THREE.WebGLRenderer({antialias : true});
+        renderer.setSize(width, height);
+        document.getElementById('canvas-frame').appendChild(renderer.domElement);
+        renderer.setClearColor(0xFFFFFF, 1.0);
+    }
+
+    var camera;
+    function initCamera() {
+        camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+        camera.position.z = 100;
+    }
+
+    var scene;
+    function initScene() {
+        scene = new THREE.Scene();
+    }
+
+    var light;
+    function initLight() {
+        light = new THREE.AmbientLight(0xffffff);
+        light.position.set(100, 100, 200);
+        scene.add(light);
+    }
+
+
+    var mesh;
+    var geometry;
+    var material;
+
+    var texture;
+    var texture2;
+    var texture3;
+    var texture4;
+
+
+    function initObject() {
+        scene = new THREE.Scene();
+        geometry = new THREE.PlaneGeometry( 80, 50);
+
+        var video = document.getElementById('video');
+        var vendorUrl = window.URL || window.webkitURL;
+
+
+        navigator.getMedia = navigator.getUserMedia ||
+                             navagator.webkitGetUserMedia ||
+                             navigator.mozGetUserMedia ||
+                             navigator.msGetUserMedia ||
+                             (navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        navigator.getMedia({
+            video: true,  
+            audio: false  
+        }, function(mediaStrean){
+            video.srcObject = mediaStrean; 
+
+        }, function(error) {
+            console.log(error);
+        });
+
+
+        texture = new THREE.VideoTexture( video );
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.format = THREE.RGBFormat;
+
+
+        // cyan();
+        normal();
+        mesh = new THREE.Mesh(geometry,  material);
+        scene.add(mesh);
+
+    }
+
+    function threeStart() {
+        initObject();
+        initThree();
+        initCamera();
+        initLight();
+        animation();
+    }
+
+    function animation() {
+        requestAnimationFrame(animation);
+        renderer.render(scene, camera);
+    }
+
+
+
+    // FILTERS
+    function normal() {
+        material = new THREE.ShaderMaterial( {
+                    // map: texture,
+                    // side: THREE.DoubleSide,
+                    uniforms: {
+                        inputImageTexture: { value: texture },
+                    },
+                    vertexShader: document.getElementById( 'vertexshader' ).textContent,
+                    fragmentShader: unescapeHTML(document.getElementById( 'fragmentshader' ).textContent),
+                    transparent: true
+                } );
+        mesh = new THREE.Mesh(geometry,  material);
+        scene.add(mesh);
+    }
+    function japanese() {
+        normal();
+        texture2 = new THREE.TextureLoader().load( "filters 2/japanese/hudsonMap.png" );
+        texture2.minFilter = THREE.LinearFilter;
+
+        texture3 = new THREE.TextureLoader().load( "filters 2/japanese/overlayMap.png" );
+        texture3.minFilter = THREE.LinearFilter;
+
+        texture4 = new THREE.TextureLoader().load( "filters 2/japanese/hudsonBackground.png" );
+        texture4.minFilter = THREE.LinearFilter;
+
+        material = new THREE.ShaderMaterial( {
+            uniforms: {
+                inputImageTexture: { value: texture },
+                inputImageTexture2: { value : texture2 },
+                inputImageTexture3: { value : texture3 },
+                inputImageTexture4: { value : texture4 }
+            },
+            vertexShader: document.getElementById( 'vertexshader' ).textContent.trim(),
+            fragmentShader: document.getElementById( 'japanese' ).textContent.trim(),
+            transparent: true
+        } );
+
+        mesh = new THREE.Mesh(geometry,  material);
+        scene.add(mesh);
+    }
+
+    function charm() {
+        normal();
+        texture2 = new THREE.TextureLoader().load( "filters 2/charm/xinnian_filter.png" );
+        texture2.minFilter = THREE.LinearFilter;
+
+        material = new THREE.ShaderMaterial( {
+            uniforms: {
+                inputImageTexture: { value: texture },
+                inputImageTexture2: { value : texture2 }
+            },
+            vertexShader: document.getElementById( 'vertexshader' ).textContent.trim(),
+            fragmentShader: document.getElementById( 'charm' ).textContent.trim(),
+            transparent: true
+        } );
+
+        mesh = new THREE.Mesh(geometry,  material);
+        scene.add(mesh);
+    }
+
+    function westernStyle() {
+        normal();
+        texture2 = new THREE.TextureLoader().load( "filters 2/western style/xifang_filter.png" );
+        texture2.minFilter = THREE.LinearFilter;
+
+        material = new THREE.ShaderMaterial( {
+            uniforms: {
+                inputImageTexture: { value: texture },
+                inputImageTexture2: { value : texture2 }
+            },
+            vertexShader: document.getElementById( 'vertexshader' ).textContent.trim(),
+            fragmentShader: document.getElementById( 'westernStyle' ).textContent.trim(),
+            transparent: true
+        } );
+
+        mesh = new THREE.Mesh(geometry,  material);
+        scene.add(mesh);       
+    }
+
+    function cyan() {
+        normal();
+        texture2 = new THREE.TextureLoader().load( "filters 2/cyan/qinghuaci_filter.png" );
+        texture2.minFilter = THREE.LinearFilter;
+
+        material = new THREE.ShaderMaterial( {
+            uniforms: {
+                inputImageTexture: { value: texture },
+                inputImageTexture2: { value : texture2 }
+            },
+            vertexShader: document.getElementById( 'vertexshader' ).textContent.trim(),
+            fragmentShader: document.getElementById( 'cyan' ).textContent.trim(),
+            transparent: true
+        } );
+
+        mesh = new THREE.Mesh(geometry,  material);
+        scene.add(mesh);       
+    }
+
+    function travel() {
+        normal();
+        texture2 = new THREE.TextureLoader().load( "filters 2/travel/lvxing_filter.png" );
+        texture2.minFilter = THREE.LinearFilter;
+
+        material = new THREE.ShaderMaterial( {
+            uniforms: {
+                inputImageTexture: { value: texture },
+                inputImageTexture2: { value : texture2 }
+            },
+            vertexShader: document.getElementById( 'vertexshader' ).textContent.trim(),
+            fragmentShader: document.getElementById( 'travel' ).textContent.trim(),
+            transparent: true
+        } );
+
+        mesh = new THREE.Mesh(geometry,  material);
+        scene.add(mesh);          
+    }
+    function blackandwhite() {
+        normal();
+        texture2 = new THREE.TextureLoader().load( "filters 2/black and white/inkwellMap.png" );
+        texture2.minFilter = THREE.NearestFilter;
+
+        material = new THREE.ShaderMaterial( {
+            uniforms: {
+                inputImageTexture: { value: texture },
+                inputImageTexture2: { value : texture2 }
+            },
+            vertexShader: document.getElementById( 'vertexshader' ).textContent.trim(),
+            fragmentShader: document.getElementById( 'blackandwhite' ).textContent.trim(),
+            transparent: true
+        } );
+
+        mesh = new THREE.Mesh(geometry,  material);
+        scene.add(mesh);          
+    }
+    function warm() {
+        normal();
+        texture2 = new THREE.TextureLoader().load( "filters 2/warm/hexu_filter.png" );
+        texture2.minFilter = THREE.LinearFilter;
+
+        material = new THREE.ShaderMaterial( {
+            uniforms: {
+                inputImageTexture: { value: texture },
+                inputImageTexture2: { value : texture2 }
+            },
+            vertexShader: document.getElementById( 'vertexshader' ).textContent.trim(),
+            fragmentShader: document.getElementById( 'warm' ).textContent.trim(),
+            transparent: true
+        } );
+
+        mesh = new THREE.Mesh(geometry,  material);
+        scene.add(mesh);          
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentshader">
+
+    varying highp vec2 textureCoordinate;
+
+    uniform sampler2D inputImageTexture;
+
+    void main()
+    {
+        gl_FragColor = texture2D(inputImageTexture, textureCoordinate);
+    }
+    
+</script>
+<script type="x-shader/x-vertex" id="vertexshader">
+    varying vec2 textureCoordinate;
+
+    void main() {
+        textureCoordinate = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+    }
+</script>
+<script type="x-shader/x-fragment" id="japanese">
+    precision lowp float;
+
+    varying highp vec2 textureCoordinate;
+
+    uniform sampler2D inputImageTexture;
+    uniform sampler2D inputImageTexture2;
+    uniform sampler2D inputImageTexture3;
+    uniform sampler2D inputImageTexture4;
+
+    void main()
+    {
+        vec4 texel = texture2D(inputImageTexture, textureCoordinate);
+        vec3 bbTexel = texture2D(inputImageTexture2, textureCoordinate).rgb;
+
+        texel.r = texture2D(inputImageTexture3, textureCoordinate).r;
+        texel.g = texture2D(inputImageTexture3, textureCoordinate).g;
+        texel.b = texture2D(inputImageTexture3, textureCoordinate).b;
+
+        vec4 mapped;
+        mapped.r = texel.r * texture2D(inputImageTexture4, textureCoordinate).r;
+        mapped.g = texel.g * texture2D(inputImageTexture4, textureCoordinate).g;
+        mapped.b = texel.b * texture2D(inputImageTexture4, textureCoordinate).b;
+        mapped.a = 1.0;
+        mapped.rgb += .75;
+        gl_FragColor = mapped;
+    }
+</script>
+<script type="x-shader/x-fragment" id="charm">
+    varying vec2 textureCoordinate;
+    varying vec2 textureCoordinate2; // TODO: This is not used
+
+    uniform sampler2D inputImageTexture;
+    uniform sampler2D inputImageTexture2; // lookup texture
+
+    uniform float intensity;
+
+    void main()
+    {
+        vec4 textureColor = texture2D(inputImageTexture, textureCoordinate);
+
+        float blueColor = textureColor.b * 63.0;
+
+        vec2 quad1;
+        quad1.y = floor(floor(blueColor) / 8.0);
+        quad1.x = floor(blueColor) - (quad1.y * 8.0);
+
+        vec2 quad2;
+        quad2.y = floor(ceil(blueColor) / 8.0);
+        quad2.x = ceil(blueColor) - (quad2.y * 8.0);
+
+        vec2 texPos1;
+        texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+        texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+        vec2 texPos2;
+        texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+        texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+        vec4 newColor1 = texture2D(inputImageTexture2, texPos1);
+        vec4 newColor2 = texture2D(inputImageTexture2, texPos2);
+
+        vec4 newColor = mix(newColor1, newColor2, fract(blueColor));
+        gl_FragColor = mix(textureColor, vec4(newColor.rgb, textureColor.w), .2);   //PS：intensity 强度需设置 0 ~ 1
+    }
+</script>
+<script type="x-shader/x-fragment" id="westernStyle">
+    varying highp vec2 textureCoordinate;
+    varying highp vec2 textureCoordinate2; // TODO: This is not used
+
+    uniform sampler2D inputImageTexture;
+    uniform sampler2D inputImageTexture2; // lookup texture
+
+    uniform lowp float intensity;
+
+    void main()
+    {
+        highp vec4 textureColor = texture2D(inputImageTexture, textureCoordinate);
+
+        highp float blueColor = textureColor.b * 63.0;
+
+        highp vec2 quad1;
+        quad1.y = floor(floor(blueColor) / 8.0);
+        quad1.x = floor(blueColor) - (quad1.y * 8.0);
+
+        highp vec2 quad2;
+        quad2.y = floor(ceil(blueColor) / 8.0);
+        quad2.x = ceil(blueColor) - (quad2.y * 8.0);
+
+        highp vec2 texPos1;
+        texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+        texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+        highp vec2 texPos2;
+        texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+        texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+        lowp vec4 newColor1 = texture2D(inputImageTexture2, texPos1);
+        lowp vec4 newColor2 = texture2D(inputImageTexture2, texPos2);
+
+        lowp vec4 newColor = mix(newColor1, newColor2, fract(blueColor));
+        gl_FragColor = mix(textureColor, vec4(newColor.rgb, textureColor.w), .2);   //PS：intensity 强度需设置 0 ~ 1
+    }
+</script>
+<script type="x-shader/x-fragment" id="cyan">
+    varying vec2 textureCoordinate;
+    varying vec2 textureCoordinate2; // TODO: This is not used
+
+    uniform sampler2D inputImageTexture;
+    uniform sampler2D inputImageTexture2; // lookup texture
+
+    uniform float intensity;
+
+    void main()
+    {
+        vec4 textureColor = texture2D(inputImageTexture, textureCoordinate);
+
+        float blueColor = textureColor.b * 63.0;
+
+        vec2 quad1;
+        quad1.y = floor(floor(blueColor) / 8.0);
+        quad1.x = floor(blueColor) - (quad1.y * 8.0);
+
+        vec2 quad2;
+        quad2.y = floor(ceil(blueColor) / 8.0);
+        quad2.x = ceil(blueColor) - (quad2.y * 8.0);
+
+        vec2 texPos1;
+        texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+        texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+        vec2 texPos2;
+        texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+        texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+        vec4 newColor1 = texture2D(inputImageTexture2, texPos1);
+        vec4 newColor2 = texture2D(inputImageTexture2, texPos2);
+
+        vec4 newColor = mix(newColor1, newColor2, fract(blueColor));
+        gl_FragColor = mix(textureColor, vec4(newColor.rgb, textureColor.w), .2);   //PS：intensity 强度需设置 0 ~ 1
+    }
+</script>
+<script type="x-shader/x-fragment" id="travel">
+    varying highp vec2 textureCoordinate;
+    varying highp vec2 textureCoordinate2; // TODO: This is not used
+
+    uniform sampler2D inputImageTexture;
+    uniform sampler2D inputImageTexture2; // lookup texture
+
+    uniform lowp float intensity;
+
+    void main()
+    {
+        highp vec4 textureColor = texture2D(inputImageTexture, textureCoordinate);
+
+        highp float blueColor = textureColor.b * 63.0;
+
+        highp vec2 quad1;
+        quad1.y = floor(floor(blueColor) / 8.0);
+        quad1.x = floor(blueColor) - (quad1.y * 8.0);
+
+        highp vec2 quad2;
+        quad2.y = floor(ceil(blueColor) / 8.0);
+        quad2.x = ceil(blueColor) - (quad2.y * 8.0);
+
+        highp vec2 texPos1;
+        texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+        texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+        highp vec2 texPos2;
+        texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+        texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+        lowp vec4 newColor1 = texture2D(inputImageTexture2, texPos1);
+        lowp vec4 newColor2 = texture2D(inputImageTexture2, texPos2);
+
+        lowp vec4 newColor = mix(newColor1, newColor2, fract(blueColor));
+        gl_FragColor = mix(textureColor, vec4(newColor.rgb, textureColor.w), .2);   //PS：intensity 强度需设置 0 ~ 1
+    }
+</script>
+<script type="x-shader/x-fragment" id="blackandwhite">
+    precision lowp float;
+
+    varying highp vec2 textureCoordinate;
+
+    uniform sampler2D inputImageTexture;
+    uniform sampler2D inputImageTexture2;
+
+    void main()
+    {
+        vec3 texel = texture2D(inputImageTexture, textureCoordinate).rgb;
+        texel = vec3(dot(vec3(0.3, 0.6, 0.1), texel));
+        texel = vec3(texture2D(inputImageTexture2, vec2(texel.r, .16666)).r);
+        gl_FragColor = vec4(texel, .3);
+    }
+</script>
+<script type="x-shader/x-fragment" id="warm">
+    varying vec2 textureCoordinate;
+    varying vec2 textureCoordinate2; // TODO: This is not used
+
+    uniform sampler2D inputImageTexture;
+    uniform sampler2D inputImageTexture2; // lookup texture
+
+    uniform float intensity;
+
+    void main()
+    {
+        vec4 textureColor = texture2D(inputImageTexture, textureCoordinate);
+
+        float blueColor = textureColor.b * 63.0;
+
+        vec2 quad1;
+        quad1.y = floor(floor(blueColor) / 8.0);
+        quad1.x = floor(blueColor) - (quad1.y * 8.0);
+
+        vec2 quad2;
+        quad2.y = floor(ceil(blueColor) / 8.0);
+        quad2.x = ceil(blueColor) - (quad2.y * 8.0);
+
+        vec2 texPos1;
+        texPos1.x = (quad1.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+        texPos1.y = (quad1.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+        vec2 texPos2;
+        texPos2.x = (quad2.x * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.r);
+        texPos2.y = (quad2.y * 0.125) + 0.5/512.0 + ((0.125 - 1.0/512.0) * textureColor.g);
+
+        vec4 newColor1 = texture2D(inputImageTexture2, texPos1);
+        vec4 newColor2 = texture2D(inputImageTexture2, texPos2);
+
+        vec4 newColor = mix(newColor1, newColor2, fract(blueColor));
+        gl_FragColor = mix(textureColor, vec4(newColor.rgb, textureColor.w), .2);   //PS：intensity 强度需设置 0 ~ 1
+    }
+</script>
+<script type="text/javascript">
+    function unescapeHTML(a){
+        a = "" + a;
+        return a.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+    }
+</script>
+
+
+</html>
